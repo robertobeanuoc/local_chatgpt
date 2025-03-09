@@ -2,7 +2,6 @@ from flask import render_template, request, session, Flask
 from flask_session import Session
 from openai import OpenAI
 import os
-import markdown
 
 
 app = Flask(
@@ -57,4 +56,4 @@ def reset_chat():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5010, ssl_context="adhoc")
+    app.run(debug=True, host="0.0.0.0", port=6060, ssl_context="adhoc")
