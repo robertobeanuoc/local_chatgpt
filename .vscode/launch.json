@@ -1,0 +1,29 @@
+{
+    "configurations": [
+        {
+            "type": "debugpy",
+            "request": "launch",
+            "name": "Launch Flask App",
+            "program": "${workspaceFolder}/src/flask-chatgpt-app/run.py",
+            "envFile": "${workspaceFolder}/src/flask-chatgpt-app/instance/.env.example",
+            "args": [],
+            "console": "integratedTerminal"
+        },
+        {
+            "type": "debugpy",
+            "request": "launch",
+            "name": "Launch Local ChatGPT",
+            "program": "${workspaceFolder}/src/local_chatgpt.py",
+            "envFile": "${workspaceFolder}/src/flask-chatgpt-app/instance/.env.example",
+            "args": [],
+            "console": "integratedTerminal"
+        }
+    ],
+    "inputs": [
+        {
+            "type": "promptString",
+            "id": "programPath",
+            "description": "Path to the Python program"
+        }
+    ]
+}
