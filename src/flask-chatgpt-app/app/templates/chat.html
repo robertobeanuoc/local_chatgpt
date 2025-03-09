@@ -12,13 +12,20 @@
     <div class="container">
         <h1>Chat with GPT</h1>
         <div id="chat-box">
-            <div id="messages"></div>
+            <div id="messages">
+            </div>
         </div>
-        <textarea id="user-input" placeholder="Type your message here..."></textarea>
-        <button id="send-button">Send</button>
-        <button id="reset-button">Reset Chat</button>
+        <div class="input-container">
+            <textarea id="user-input" placeholder="Type your message here..."></textarea>
+            <button id="send-button">Send</button>
+            <button id="reset-button">Reset Chat</button>
+        </div>
     </div>
 
+    <script>
+        // Pass messages from Flask to JavaScript
+        window.messages = {{ messages | tojson | safe }};
+    </script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 
