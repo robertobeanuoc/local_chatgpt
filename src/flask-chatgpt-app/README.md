@@ -66,3 +66,8 @@ Contributions are welcome! Please feel free to submit a pull request or open an 
 ## License
 
 This project is licensed under the MIT License. See the LICENSE file for more details.
+
+
+## Howto invoke web
+
+(https://platform.openai.com/docs/guides/tools-web-search?api-mode=responses&utm_source=chatgpt.com)[https://platform.openai.com/docs/guides/tools-web-search?api-mode=responses&utm_source=chatgpt.com]
