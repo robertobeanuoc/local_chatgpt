@@ -1,4 +1,4 @@
-openai~=1.65.4
+openai~=1.69.0
 rich~=13.9.4
 Flask==3.1.0
 Flask-Session~=0.8.0

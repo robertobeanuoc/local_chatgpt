@@ -38,12 +38,16 @@ def chat():
 
     if request.method == "POST":
         user_message = request.form["user_message"]
-        session["messages"].append({"role": "user", "content": user_message})
+        # session["messages"].append({"role": "user", "content": user_message})
 
-        response = client.chat.completions.create(
-            model=session.get("model", "gpt-4o"), messages=session["messages"]
+        response = client.responses.create(
+            model=session.get("model", "gpt-4"),
+            # messages=session["messages"],
+            input=user_message,
+            tools=[{"type": "web_search_preview"}],
         )
-        assistant_message = response.choices[0].message.content
+        assistant_message = response.output_text
+        # response["choices"][0]["message"]["content"]
         session["messages"].append({"role": "assistant", "content": assistant_message})
 
     return render_template("chat.html", messages=session["messages"])
