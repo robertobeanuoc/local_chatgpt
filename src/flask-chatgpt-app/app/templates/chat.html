@@ -11,6 +11,20 @@
 <body>
     <div class="container">
         <h1>Chat with GPT</h1>
+        <form action="{{ url_for('chat') }}" method="post">
+            <label for="model">Current Model:</label>
+            <select name="model" id="model">
+                <option value="o1-mini" {% if model=="o1-mini" %}selected{% endif %}>o1-mini</option>
+                <option value="gpt-4o" {% if model=="gpt-4o" %}selected{% endif %}>gpt-4o</option>
+            </select>
+            <div>
+                <input type="checkbox" id="web_search" name="web_search" value="true" {% if web_search %}checked{% endif
+                    %}>
+                <label for="web_search">Enable Web Search</label>
+            </div>
+            <button type="submit" name="change_model">Actualizar configuración</button>
+        </form>
+
         <div id="chat-box">
             <div id="messages">
             </div>

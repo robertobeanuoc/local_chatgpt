@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ChatGPT Flask App</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
+
 <body>
     <div class="container">
         <h1>Welcome to the ChatGPT Flask App</h1>
@@ -16,8 +18,13 @@
                 <option value="o1-mini">o1-mini</option>
                 <option value="gpt-4o">gpt-4o</option>
             </select>
+            <div>
+                <input type="checkbox" id="web_search" name="web_search" value="false">
+                <label for="web_search">Enable Web Search</label>
+            </div>
             <button type="submit">Start Chat</button>
         </form>
     </div>
 </body>
+
 </html>

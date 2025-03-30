@@ -32,21 +32,43 @@ def chat():
     if "messages" not in session:
         session["messages"] = []
 
-    # Set model from query parameter if provided
-    if request.method == "GET" and request.args.get("model"):
-        session["model"] = request.args.get("model")
+    # Set model and web_search from query parameters if provided (GET request)
+    if request.method == "GET":
+        if request.args.get("model"):
+            session["model"] = request.args.get("model")
+        session["web_search"] = request.args.get("web_search", "false") == "true"
 
     if request.method == "POST":
-        user_message = request.form["user_message"]
-        session["messages"].append({"role": "user", "content": user_message})
+        if "change_model" in request.form:
+            session["model"] = request.form["model"]
+            session["web_search"] = request.form.get("web_search", "false") == "true"
+        else:
+            user_message = request.form["user_message"]
+            if session["web_search"]:
+                response = client.responses.create(
+                    model="gpt-4o",
+                    input=user_message,
+                    tools=[{"type": "web_search_preview"}],
+                )
+                assistant_message = response.output_text
+            else:
+                session["messages"].append({"role": "user", "content": user_message})
+                response = client.chat.completions.create(
+                    model=session.get("model", "gpt-4o"),
+                    messages=session["messages"],
+                )
+                assistant_message = response.choices[0].message.content
 
-        response = client.chat.completions.create(
-            model=session.get("model", "gpt-4o"), messages=session["messages"]
-        )
-        assistant_message = response.choices[0].message.content
-        session["messages"].append({"role": "assistant", "content": assistant_message})
+            session["messages"].append(
+                {"role": "assistant", "content": assistant_message}
+            )
 
-    return render_template("chat.html", messages=session["messages"])
+    return render_template(
+        "chat.html",
+        messages=session["messages"],
+        model=session.get("model"),
+        web_search=session.get("web_search"),
+    )
 
 
 @app.route("/reset", methods=["POST"])
