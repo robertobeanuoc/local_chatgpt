@@ -48,6 +48,9 @@ document.addEventListener('DOMContentLoaded', function () {
         // Clear input
         userInput.value = '';
 
+        // Append "Consulting..." message to the chat
+        appendMessage('assistant', 'Consulting...');
+
         // Create form data
         const formData = new FormData();
         formData.append('user_message', message);
@@ -62,7 +65,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     window.location.reload(); // Reload to get updated messages
                 }
             })
-            .catch(error => console.error('Error sending message:', error));
+            .catch(error => {
+                console.error('Error sending message:', error);
+                // Remove "Consulting..." message if there's an error
+                const messages = document.getElementById('messages');
+                const consultingMessage = messages.querySelector('.message.assistant:last-child');
+                if (consultingMessage && consultingMessage.textContent === 'Consulting...') {
+                    consultingMessage.remove();
+                }
+            });
     }
 
     function appendMessage(role, content) {

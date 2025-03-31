@@ -4,15 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat with GPT</title>
+    <title>Chat with GPT Model {{model}}: WebSearch:{{web_search}}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 
 <body>
     <div class="container">
-        <h1>Chat with GPT</h1>
+        <h1>Chat with GPT Model {{model}}: WebSearch:{{web_search}}</h1>
         <form action="{{ url_for('chat') }}" method="post">
-            <label for="model">Current Model:</label>
+            <label for="model">Update settings:</label>
             <select name="model" id="model">
                 <option value="o1-mini" {% if model=="o1-mini" %}selected{% endif %}>o1-mini</option>
                 <option value="gpt-4o" {% if model=="gpt-4o" %}selected{% endif %}>gpt-4o</option>
@@ -22,8 +22,10 @@
                     %}>
                 <label for="web_search">Enable Web Search</label>
             </div>
-            <button type="submit" name="change_model">Actualizar configuración</button>
+            <button type="submit" name="change_model">Update settings</button>
         </form>
+
+        <div class="spacer" style="height: 20px;"></div>
 
         <div id="chat-box">
             <div id="messages">
@@ -41,6 +43,17 @@
         window.messages = {{ messages | tojson | safe }};
     </script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+    <script>
+        // Scroll to the bottom of the messages container
+        document.addEventListener('DOMContentLoaded', function () {
+            const messagesContainer = document.getElementById('messages');
+            if (messagesContainer) {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        });
+    </script>
+
 </body>
 
 </html>
