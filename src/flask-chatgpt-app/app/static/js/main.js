@@ -49,8 +49,7 @@ document.addEventListener('DOMContentLoaded', function () {
         userInput.value = '';
 
         // Append "Consulting..." message to the chat
-        appendMessage('assistant', 'Consulting...');
-
+        appendMessage('assistant', 'Consulting...', true);
         // Create form data
         const formData = new FormData();
         formData.append('user_message', message);
