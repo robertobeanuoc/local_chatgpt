@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.error('Error sending message:', error);
                 // Remove "Consulting..." message if there's an error
                 const messages = document.getElementById('messages');
-                const consultingMessage = messages.querySelector('.message.assistant:last-child');
+                const consultingMessage = messages.querySelector('.message.assistant.consulting-message');
                 if (consultingMessage && consultingMessage.textContent === 'Consulting...') {
                     consultingMessage.remove();
                 }
