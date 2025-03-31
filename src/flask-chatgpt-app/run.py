@@ -36,15 +36,16 @@ def chat():
     if request.method == "GET":
         if request.args.get("model"):
             session["model"] = request.args.get("model")
-        session["web_search"] = request.args.get("web_search", "false") == "true"
+        session["web_search"] = request.args.get("web_search") == "true"
 
     if request.method == "POST":
         if "change_model" in request.form:
             session["model"] = request.form["model"]
-            session["web_search"] = request.form.get("web_search", "false") == "true"
+            session["web_search"] = request.form.get("web_search") == "true"
         else:
             user_message = request.form["user_message"]
             if session["web_search"]:
+
                 response = client.responses.create(
                     model="gpt-4o",
                     input=user_message,
