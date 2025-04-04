@@ -1,6 +1,7 @@
-from flask import render_template, request, session, Flask
+from flask import render_template, request, session, Flask, jsonify
 from flask_session import Session
 from openai import OpenAI
+import markdown
 import os
 
 
@@ -27,6 +28,16 @@ def index():
 Session(app)
 
 
+def transform_messages_to_html(messages: list[dict]) -> list[dict]:
+    """Transform messages to HTML format for rendering."""
+    transformed_messages = []
+    for message in messages:
+        transformed_message = message.copy()
+        transformed_message["content"] = markdown.markdown(message["content"])
+        transformed_messages.append(transformed_message)
+    return transformed_messages
+
+
 @app.route("/chat", methods=["GET", "POST"])
 def chat():
     if "messages" not in session:
@@ -44,16 +55,15 @@ def chat():
             session["web_search"] = request.form.get("web_search") == "true"
         else:
             user_message = request.form["user_message"]
+            session["messages"].append({"role": "user", "content": user_message})
             if session["web_search"]:
-
                 response = client.responses.create(
                     model="gpt-4o",
-                    input=user_message,
+                    input=session["messages"],
                     tools=[{"type": "web_search_preview"}],
                 )
                 assistant_message = response.output_text
             else:
-                session["messages"].append({"role": "user", "content": user_message})
                 response = client.chat.completions.create(
                     model=session.get("model", "gpt-4o"),
                     messages=session["messages"],
@@ -66,7 +76,7 @@ def chat():
 
     return render_template(
         "chat.html",
-        messages=session["messages"],
+        messages=transform_messages_to_html(session["messages"]),
         model=session.get("model"),
         web_search=session.get("web_search"),
     )
