@@ -96,6 +96,8 @@ def chat():
 
 
 @app.route("/get_model", methods=["GET"])
+def get_model():
+    return jsonify({"model": session.get("model")})
 @app.route("/reset", methods=["POST"])
 def reset_chat():
     session.pop("messages", None)
