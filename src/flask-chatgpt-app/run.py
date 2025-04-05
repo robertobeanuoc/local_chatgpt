@@ -33,7 +33,8 @@ def transform_messages_to_html(messages: list[dict]) -> list[dict]:
     transformed_messages = []
     for message in messages:
         transformed_message = message.copy()
-        transformed_message["content"] = markdown.markdown(message["content"])
+        if message["role"] == "assistant":
+            transformed_message["content"] = markdown.markdown(message["content"])
         transformed_messages.append(transformed_message)
     return transformed_messages
 
@@ -74,6 +75,18 @@ def chat():
                 {"role": "assistant", "content": assistant_message}
             )
 
+            # Return JSON response for AJAX requests
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify(
+                    {
+                        "messages": transform_messages_to_html(
+                            session["messages"][-2:]
+                        ),  # Return only the last 2 messages
+                        "model": session.get("model"),
+                        "web_search": session.get("web_search"),
+                    }
+                )
+
     return render_template(
         "chat.html",
         messages=transform_messages_to_html(session["messages"]),
@@ -82,6 +95,7 @@ def chat():
     )
 
 
+@app.route("/get_model", methods=["GET"])
 @app.route("/reset", methods=["POST"])
 def reset_chat():
     session.pop("messages", None)
