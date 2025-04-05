@@ -1,25 +1,143 @@
 document.addEventListener('DOMContentLoaded', function () {
-    const chatForm = document.getElementById('chat-form');
-    const userInput = document.getElementById('user-input');
     const messagesContainer = document.getElementById('messages');
+    const userInput = document.getElementById('user-input');
     const sendButton = document.getElementById('send-button');
     const resetButton = document.getElementById('reset-button');
 
-    // Display existing messages if any
-    function loadMessages() {
-        if (window.messages) {
-            window.messages.forEach(message => {
-                appendMessage(message.role, message.content);
-            });
+    // Render all messages
+    function renderMessages() {
+        messagesContainer.innerHTML = '';
+        window.messages.forEach(message => {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${message.role}`;
+
+            const roleSpan = document.createElement('span');
+            roleSpan.className = 'role';
+            roleSpan.textContent = message.role === 'user' ? 'You: ' : 'Assistant: ';
+            messageDiv.appendChild(roleSpan);
+
+            const contentSpan = document.createElement('span');
+            contentSpan.className = 'content';
+
+            // Renderizar HTML para mensajes del asistente
+            if (message.role === 'assistant') {
+                contentSpan.innerHTML = message.content; // Usar innerHTML para renderizar HTML
+            } else {
+                contentSpan.textContent = message.content; // Usar textContent para usuarios (seguridad)
+            }
+
+            messageDiv.appendChild(contentSpan);
+            messagesContainer.appendChild(messageDiv);
+        });
+
+        // Scroll to bottom
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    // Initial render
+    renderMessages();
+
+    // Function to add a temporary "consulting" message
+    function addConsultingMessage() {
+        const consultingDiv = document.createElement('div');
+        consultingDiv.className = 'message assistant consulting';
+        consultingDiv.id = 'consulting-message';
+
+        const roleSpan = document.createElement('span');
+        roleSpan.className = 'role';
+        roleSpan.textContent = 'Assistant: ';
+
+        const contentSpan = document.createElement('span');
+        contentSpan.className = 'content';
+        contentSpan.innerHTML = '<em>Consultando...</em>';
+
+        consultingDiv.appendChild(roleSpan);
+        consultingDiv.appendChild(contentSpan);
+        messagesContainer.appendChild(consultingDiv);
+
+        // Scroll to show the consulting message
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    // Function to remove the consulting message
+    function removeConsultingMessage() {
+        const consultingMessage = document.getElementById('consulting-message');
+        if (consultingMessage) {
+            consultingMessage.remove();
         }
     }
 
-    // Initialize messages display
-    loadMessages();
+    // Send message function
+    function sendMessage() {
+        const message = userInput.value.trim();
+        if (message === '') return;
 
-    sendButton.addEventListener('click', function () {
-        sendMessage();
-    });
+        // Clear input
+        userInput.value = '';
+
+        // Create form data
+        const formData = new FormData();
+        formData.append('user_message', message);
+
+        // Add user message immediately
+        const userMessageObj = { role: 'user', content: message };
+        if (!window.messages) {
+            window.messages = [];
+        }
+        window.messages.push(userMessageObj);
+        renderMessages();
+
+        // Show consulting message
+        addConsultingMessage();
+
+        // Disable send button while processing
+        sendButton.disabled = true;
+
+        // Send message
+        fetch('/chat', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Network response was not ok');
+            })
+            .then(data => {
+                // Remove consulting message
+                removeConsultingMessage();
+
+                // Update messages with response from server
+                if (data.messages && data.messages.length > 0) {
+                    // The server returns the last two messages (user + assistant)
+                    // We already added the user message, so we just need the assistant's response
+                    window.messages.pop(); // Remove the user message we added (server will provide it)
+                    window.messages = window.messages.concat(data.messages);
+                }
+                renderMessages();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                removeConsultingMessage();
+
+                // Show error message
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'message assistant error';
+                errorDiv.innerHTML = '<span class="role">Assistant: </span><span class="content"><em>Error: No se pudo obtener respuesta</em></span>';
+                messagesContainer.appendChild(errorDiv);
+            })
+            .finally(() => {
+                // Re-enable send button
+                sendButton.disabled = false;
+            });
+    }
+
+    // Event listeners
+    sendButton.addEventListener('click', sendMessage);
 
     userInput.addEventListener('keydown', function (event) {
         if (event.key === 'Enter' && !event.shiftKey) {
@@ -29,69 +147,11 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     resetButton.addEventListener('click', function () {
-        fetch('/reset', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
+        fetch('/reset', { method: 'POST' })
             .then(() => {
-                messagesContainer.innerHTML = '';
+                window.messages = [];
+                renderMessages();
             })
-            .catch(error => console.error('Error resetting chat:', error));
+            .catch(error => console.error('Error:', error));
     });
-
-    function sendMessage() {
-        const message = userInput.value.trim();
-        if (message === '') return;
-
-        // Clear input
-        userInput.value = '';
-
-        // Append "Consulting..." message to the chat
-        appendMessage('assistant', 'Consulting...', true);
-        // Create form data
-        const formData = new FormData();
-        formData.append('user_message', message);
-
-        // Send message
-        fetch('/chat', {
-            method: 'POST',
-            body: formData
-        })
-            .then(response => {
-                if (response.ok) {
-                    window.location.reload(); // Reload to get updated messages
-                }
-            })
-            .catch(error => {
-                console.error('Error sending message:', error);
-                // Remove "Consulting..." message if there's an error
-                const messages = document.getElementById('messages');
-                const consultingMessage = messages.querySelector('.message.assistant.consulting-message');
-                if (consultingMessage && consultingMessage.textContent === 'Consulting...') {
-                    consultingMessage.remove();
-                }
-            });
-    }
-
-    function appendMessage(role, content) {
-        const messageDiv = document.createElement('div');
-        messageDiv.classList.add('message', role);
-
-        const roleSpan = document.createElement('span');
-        roleSpan.classList.add('role');
-        roleSpan.textContent = role === 'user' ? 'You: ' : 'Assistant: ';
-
-        const contentSpan = document.createElement('span');
-        contentSpan.classList.add('content');
-        contentSpan.textContent = content;
-
-        messageDiv.appendChild(roleSpan);
-        messageDiv.appendChild(contentSpan);
-        messagesContainer.appendChild(messageDiv);
-
-        // Scroll to bottom
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
 });
