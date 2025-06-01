@@ -172,5 +172,6 @@ cython_debug/
 
 # Flask session files
 flask_session/
+src/flask_chatgpt_app/uploads
 
 build_model.sh
