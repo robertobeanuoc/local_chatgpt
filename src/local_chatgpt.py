@@ -5,11 +5,10 @@ from rich.console import Console
 from rich.markdown import Markdown
 import json
 import os
+from flask_chatgpt_app.constants import model_options, default_model
 
 
 console = Console()
-default_model: str = "o1-mini"
-model_options = ["gpt-4o", "o1-mini"]
 
 model = (
     input(f"\nChoose a model {model_options} (default is '{default_model}'): ")

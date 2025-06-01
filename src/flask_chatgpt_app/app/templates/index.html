@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 
+
 <body>
     <div class="container">
         <h1>Welcome to the ChatGPT Flask App</h1>
@@ -15,8 +16,13 @@
         <form action="{{ url_for('chat') }}" method="get">
             <label for="model">Choose a model:</label>
             <select name="model" id="model">
-                <option value="o1-mini">o1-mini</option>
-                <option value="gpt-4o" selected>gpt-4o</option>
+                {% for model_name in model_options %}
+                {% if model_name != default_model %}
+                <option value="{{ model_name }}">{{ model_name }}</option>
+                {% else %}
+                <option value="{{ model_name }}" selected>{{ model_name }}</option>
+                {% endif %}
+                {% endfor %}
             </select>
             <div>
                 <input type="checkbox" id="web_search" name="web_search" value="true">

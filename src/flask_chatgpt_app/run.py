@@ -6,6 +6,7 @@ import os
 import base64
 import mimetypes
 from werkzeug.utils import secure_filename
+from constants import model_options, default_model
 
 app = Flask(
     __name__,
@@ -31,7 +32,9 @@ app.config["SECRET_KEY"] = app.secret_key
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template(
+        "index.html", model_options=model_options, default_model=default_model
+    )
 
 
 Session(app)
@@ -73,9 +76,7 @@ def prepare_message_with_file(user_message, file):
                     {"type": "text", "text": user_message},
                     {
                         "type": (
-                            "image_url"
-                            if mime_type.startswith("image/")
-                            else "file_url"
+                            "image_url" if mime_type.startswith("image/") else "file"
                         ),
                         "file_url": {"url": f"data:{mime_type};base64,{file_base64}"},
                     },
@@ -109,13 +110,15 @@ def chat():
 
             # Store file information for display
             filename = None
-            if uploaded_file and uploaded_file.filename:
+            if uploaded_file and uploaded_file.filename and not session["web_search"]:
                 filename = secure_filename(uploaded_file.filename)
-
-            # Add message to session
-            session["messages"].append(
-                {"role": "user", "content": user_message, "file": filename}
-            )
+                # Add message to session
+                session["messages"].append(
+                    {"role": "user", "content": user_message, "file": filename}
+                )
+            else:
+                # Add message without file
+                session["messages"].append({"role": "user", "content": user_message})
 
             if session["web_search"]:
                 # For web search, we need to format the input differently
@@ -123,13 +126,13 @@ def chat():
                     # Currently, the web search API might not support file uploads
                     # This is a simplified implementation
                     response = client.responses.create(
-                        model="gpt-4o",
+                        model=session.get("model", default_model),
                         input=f"{user_message} [File attached: {filename}]",
                         tools=[{"type": "web_search_preview"}],
                     )
                 else:
                     response = client.responses.create(
-                        model="gpt-4o",
+                        model=session.get("model", default_model),
                         input=user_message,
                         tools=[{"type": "web_search_preview"}],
                     )
@@ -141,7 +144,7 @@ def chat():
                         user_message, uploaded_file
                     )
                     response = client.chat.completions.create(
-                        model=session.get("model", "gpt-4o"),
+                        model=session.get("model", default_model),
                         messages=api_messages,
                     )
                 else:
@@ -160,7 +163,7 @@ def chat():
                     api_messages.append({"role": "user", "content": user_message})
 
                     response = client.chat.completions.create(
-                        model=session.get("model", "gpt-4o"),
+                        model=session.get("model", default_model),
                         messages=api_messages,
                     )
 
