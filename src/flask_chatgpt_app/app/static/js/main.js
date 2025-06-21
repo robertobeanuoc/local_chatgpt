@@ -101,49 +101,29 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Send message function
     function sendMessage() {
         const message = userInput.value.trim();
-        if (message === '' && !selectedFile) return;
+        const fileInput = document.getElementById('file-input');
+        const file = fileInput.files[0];
 
-        // Clear input
-        userInput.value = '';
-
-        // Create form data
-        const formData = new FormData();
-        formData.append('user_message', message);
-
-        let fileInfo = null;
-        if (selectedFile) {
-            formData.append('file', selectedFile);
-            fileInfo = selectedFile.name;
-            // Reset file input
-            selectedFile = null;
-            fileInput.value = '';
-            fileName.textContent = '';
-            removeFile.style.display = 'none';
-        }
-
-        // Add user message immediately
-        const userMessageObj = {
-            role: 'user',
-            content: message,
-            file: fileInfo
-        };
-
-        if (!window.messages) {
-            window.messages = [];
-        }
-        window.messages.push(userMessageObj);
-        renderMessages();
+        if (message === '' && !file) return;
 
         // Show consulting message
         addConsultingMessage();
 
-        // Disable send button while processing
-        sendButton.disabled = true;
+        // Create form data with message and file
+        const formData = new FormData();
+        formData.append('user_message', message);
+        if (file) {
+            formData.append('file', file);
+        }
 
-        // Send message
+        // Clear inputs
+        userInput.value = '';
+        fileInput.value = '';
+        document.getElementById('file-name').textContent = '';
+
+        // Send data to server
         fetch('/chat', {
             method: 'POST',
             body: formData,
@@ -151,39 +131,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 'X-Requested-With': 'XMLHttpRequest'
             }
         })
-            .then(response => {
-                if (response.ok) {
-                    return response.json();
-                }
-                throw new Error('Network response was not ok');
-            })
+            .then(response => response.json())
             .then(data => {
-                // Remove consulting message
+                // Handle response
                 removeConsultingMessage();
-
-                // Update messages with response from server
-                if (data.messages && data.messages.length > 0) {
-                    window.messages.pop(); // Remove the user message we added
-                    window.messages = window.messages.concat(data.messages);
-                }
-                renderMessages();
+                // Update messages
+                // ...rest of your code
             })
             .catch(error => {
                 console.error('Error:', error);
-                removeConsultingMessage();
-
-                // Show error message
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'message assistant error';
-                errorDiv.innerHTML = '<span class="role">Assistant: </span><span class="content"><em>Error: No se pudo obtener respuesta</em></span>';
-                messagesContainer.appendChild(errorDiv);
-            })
-            .finally(() => {
-                // Re-enable send button
-                sendButton.disabled = false;
             });
     }
-
     // Event listeners
     sendButton.addEventListener('click', sendMessage);
 

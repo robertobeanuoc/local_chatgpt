@@ -44,6 +44,9 @@ def transform_messages_to_html(messages: list[dict]) -> list[dict]:
     """Transform messages to HTML format for rendering."""
     transformed_messages = []
     for message in messages:
+        # Check if message content is a list
+        if isinstance(message, list):
+            message = message[0]
         transformed_message = message.copy()
         if message["role"] == "assistant":
             transformed_message["content"] = markdown.markdown(message["content"])
@@ -63,30 +66,27 @@ def prepare_message_with_file(user_message, file):
         if mime_type is None:
             mime_type = "application/octet-stream"
 
+        uploaded_file = None
+
         # Read file as base64
         with open(filepath, "rb") as f:
-            file_content = f.read()
-            file_base64 = base64.b64encode(file_content).decode("utf-8")
+            uploaded_file = client.files.create(file=f, purpose="assistants")
 
-        # Format message with file content for OpenAI API
-        messages = [
+        ret_message = [
             {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": user_message},
-                    {
-                        "type": (
-                            "image_url" if mime_type.startswith("image/") else "file"
-                        ),
-                        "file_url": {"url": f"data:{mime_type};base64,{file_base64}"},
-                    },
+                    {"type": "input_text", "text": user_message},
+                    {"type": "input_file", "file_id": uploaded_file.id},
                 ],
             }
         ]
-        return messages, filename
+
     else:
         # Regular text message
-        return [{"role": "user", "content": user_message}], None
+        ret_message = [{"role": "user", "content": user_message}]
+
+    return ret_message
 
 
 @app.route("/chat", methods=["GET", "POST"])
@@ -113,61 +113,28 @@ def chat():
             if uploaded_file and uploaded_file.filename and not session["web_search"]:
                 filename = secure_filename(uploaded_file.filename)
                 # Add message to session
-                session["messages"].append(
-                    {"role": "user", "content": user_message, "file": filename}
+                file_message = prepare_message_with_file(
+                    user_message=user_message, file=uploaded_file
                 )
+                session["messages"].append(file_message)
             else:
                 # Add message without file
                 session["messages"].append({"role": "user", "content": user_message})
 
             if session["web_search"]:
-                # For web search, we need to format the input differently
-                if uploaded_file and uploaded_file.filename:
-                    # Currently, the web search API might not support file uploads
-                    # This is a simplified implementation
-                    response = client.responses.create(
-                        model=session.get("model", default_model),
-                        input=f"{user_message} [File attached: {filename}]",
-                        tools=[{"type": "web_search_preview"}],
-                    )
-                else:
-                    response = client.responses.create(
-                        model=session.get("model", default_model),
-                        input=user_message,
-                        tools=[{"type": "web_search_preview"}],
-                    )
+                response = client.responses.create(
+                    model=session.get("model", default_model),
+                    input=user_message,
+                    tools=[{"type": "web_search_preview"}],
+                )
                 assistant_message = response.output_text
             else:
-                # Prepare message with or without file
-                if uploaded_file and uploaded_file.filename:
-                    api_messages, filename = prepare_message_with_file(
-                        user_message, uploaded_file
-                    )
-                    response = client.chat.completions.create(
-                        model=session.get("model", default_model),
-                        messages=api_messages,
-                    )
-                else:
-                    # Regular text message
-                    # Get all previous messages for context
-                    api_messages = []
-                    for msg in session["messages"][
-                        :-1
-                    ]:  # Exclude the last message (just added)
-                        if "file" not in msg:
-                            api_messages.append(
-                                {"role": msg["role"], "content": msg["content"]}
-                            )
 
-                    # Add the new user message
-                    api_messages.append({"role": "user", "content": user_message})
-
-                    response = client.chat.completions.create(
-                        model=session.get("model", default_model),
-                        messages=api_messages,
-                    )
-
-                assistant_message = response.choices[0].message.content
+                response = client.responses.create(
+                    model=session.get("model", default_model),
+                    input=session["messages"],
+                )
+                assistant_message = response.output_text
 
             # Add assistant's response to session
             session["messages"].append(
