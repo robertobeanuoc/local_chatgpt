@@ -3,10 +3,8 @@ from flask_session import Session
 from openai import OpenAI
 import markdown
 import os
-import base64
-import mimetypes
 from werkzeug.utils import secure_filename
-from constants import model_options, default_model
+from flask_chatgpt_app.constants import model_options, default_model
 
 app = Flask(
     __name__,
