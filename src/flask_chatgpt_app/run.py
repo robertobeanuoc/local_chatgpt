@@ -121,7 +121,7 @@ def chat():
                     raise ValueError(
                         "Web search and file upload are not supported together."
                     )
-                app.logger.info("Chat commpetions with web search enabled ...")
+                app.logger.info("Chat completions with web search enabled ...")
                 response = client.responses.create(
                     model=session.get("model", default_model),
                     input=session["messages"],
