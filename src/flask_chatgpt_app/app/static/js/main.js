@@ -131,15 +131,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 'X-Requested-With': 'XMLHttpRequest'
             }
         })
-            .then(response => response.json())
-            .then(data => {
-                // Handle response
-                removeConsultingMessage();
-                // Update messages
-                // ...rest of your code
+            .then(response => {
+                if (response.ok) {
+                    // Refrescar la página completa para mostrar la respuesta actualizada
+                    window.location.reload();
+                } else {
+                    throw new Error('Network response was not ok');
+                }
             })
             .catch(error => {
                 console.error('Error:', error);
+                // Remover mensaje de consulta en caso de error
+                removeConsultingMessage();
             });
     }
     // Event listeners

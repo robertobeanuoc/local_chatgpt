@@ -49,42 +49,39 @@ def transform_messages_to_html(messages: list[dict]) -> list[dict]:
             message = message[0]
         transformed_message = message.copy()
         if message["role"] == "assistant":
-            transformed_message["content"] = markdown.markdown(message["content"])
+            if isinstance(message["content"], list):
+                message_content = message["content"][0]
+            else:
+                message_content = message["content"]
+            transformed_message["content"] = markdown.markdown(message_content)
         transformed_messages.append(transformed_message)
     return transformed_messages
 
 
 def prepare_message_with_file(user_message, file):
-    """Prepare a message with file content for OpenAI API."""
+    """Prepara un mensaje con o sin fichero para la API de OpenAI."""
     if file:
         filename = secure_filename(file.filename)
         filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
         file.save(filepath)
 
-        # Get the MIME type
-        mime_type, _ = mimetypes.guess_type(filepath)
-        if mime_type is None:
-            mime_type = "application/octet-stream"
-
-        uploaded_file = None
-
-        # Read file as base64
         with open(filepath, "rb") as f:
             uploaded_file = client.files.create(file=f, purpose="assistants")
 
-        ret_message = [
-            {
-                "role": "user",
-                "content": [
-                    {"type": "input_text", "text": user_message},
-                    {"type": "input_file", "file_id": uploaded_file.id},
-                ],
-            }
-        ]
-
+        ret_message = {
+            "role": "user",
+            "content": [
+                {"type": "input_text", "text": user_message},
+                {"type": "input_file", "file_id": uploaded_file.id},
+            ],
+        }
+        os.remove(filepath)  # Eliminar el fichero después de subirlo
     else:
-        # Regular text message
-        ret_message = [{"role": "user", "content": user_message}]
+        # Mensaje solo texto
+        ret_message = {
+            "role": "user",
+            "content": user_message,
+        }
 
     return ret_message
 
@@ -108,57 +105,68 @@ def chat():
             user_message = request.form["user_message"]
             uploaded_file = request.files.get("file")
 
-            # Store file information for display
-            filename = None
-            if uploaded_file and uploaded_file.filename and not session["web_search"]:
-                filename = secure_filename(uploaded_file.filename)
-                # Add message to session
-                file_message = prepare_message_with_file(
-                    user_message=user_message, file=uploaded_file
-                )
-                session["messages"].append(file_message)
+            # Añadir mensaje del usuario (con o sin fichero) en el formato correcto
+            if (
+                uploaded_file
+                and uploaded_file.filename
+                and not session.get("web_search")
+            ):
+                user_msg = prepare_message_with_file(user_message, uploaded_file)
             else:
-                # Add message without file
-                session["messages"].append({"role": "user", "content": user_message})
+                user_msg = prepare_message_with_file(user_message, None)
+                session["messages"].append(user_msg)
 
-            if session["web_search"]:
-                response = client.responses.create(
-                    model=session.get("model", default_model),
-                    input=user_message,
-                    tools=[{"type": "web_search_preview"}],
-                )
-                assistant_message = response.output_text
-            else:
-
+            if session.get("web_search"):
+                if uploaded_file:
+                    raise ValueError(
+                        "Web search and file upload are not supported together."
+                    )
+                app.logger.info("Chat commpetions with web search enabled ...")
                 response = client.responses.create(
                     model=session.get("model", default_model),
                     input=session["messages"],
+                    tools=[{"type": "web_search_preview"}],
                 )
                 assistant_message = response.output_text
+                app.logger.info("Chat completions response received.")
+            else:
+                if uploaded_file:
+                    app.logger.info("Responses with file upload ...")
+                    response = client.responses.create(
+                        model=session.get("model", default_model),
+                        input=[user_msg],
+                    )
+                    app.logger.info("Response with file upload received.")
+                    assistant_message = response.output_text
+                else:
+                    app.logger.info("Chat completions without file upload ...")
+                    response = client.chat.completions.create(
+                        model=session.get("model", default_model),
+                        messages=session["messages"],
+                    )
+                    app.logger.info("Chat completions response received.")
+                    assistant_message = response.choices[0].message.content
 
-            # Add assistant's response to session
             session["messages"].append(
-                {"role": "assistant", "content": assistant_message}
+                {
+                    "role": "assistant",
+                    "content": assistant_message,
+                }
             )
 
-            # Return JSON response for AJAX requests
-            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                return jsonify(
-                    {
-                        "messages": transform_messages_to_html(
-                            session["messages"][-2:]
-                        ),  # Return only the last 2 messages
-                        "model": session.get("model"),
-                        "web_search": session.get("web_search"),
-                    }
-                )
+    # Si es una solicitud AJAX, devolver respuesta JSON para que JS pueda manejarla
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return jsonify({"success": True, "reload": True})
 
-    return render_template(
+    # Si no es AJAX, renderizar la plantilla normalmente
+    rendered_page = render_template(
         "chat.html",
         messages=transform_messages_to_html(session["messages"]),
         model=session.get("model"),
         web_search=session.get("web_search"),
     )
+
+    return rendered_page
 
 
 @app.route("/get_model", methods=["GET"])

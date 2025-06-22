@@ -176,3 +176,6 @@ flask_session/
 **/uploads/
 
 build_model.sh
+# macOS system files
+.DS_Store
+**/.DS_Store
