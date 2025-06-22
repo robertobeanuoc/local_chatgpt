@@ -11,7 +11,7 @@
 <body>
     <div class="container">
         <h1>Chat with GPT Model {{model}}: WebSearch:{{web_search}}</h1>
-        <form action="{{ url_for('chat') }}" method="post">
+        <form action="{{ url_for('chat') }}" method="post" enctype="multipart/form-data">
             <label for="model">Update settings:</label>
             <select name="model" id="model">
                 <option value="gpt-4.1" {% if model=="gpt-4.1" %}selected{% endif %}>gpt-4.1</option>
