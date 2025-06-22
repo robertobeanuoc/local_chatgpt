@@ -7,6 +7,7 @@ RUN apt-get install libgl1-mesa-glx -y
 
 
 
+RUN mkdir -p /app/
 RUN mkdir -p /flask_chatgpt_app/
 
 COPY local_chatgpt/requirements.txt /flask_chatgpt_app/requirements.txt
@@ -14,9 +15,9 @@ COPY local_chatgpt/requirements.txt /flask_chatgpt_app/requirements.txt
 RUN pip install --upgrade pip
 RUN pip3 install -r /flask_chatgpt_app/requirements.txt
 
-COPY local_chatgpt/src/flask_chatgpt_app/ /flask_chatgpt_app/
+COPY local_chatgpt/src/flask_chatgpt_app/ /app/flask_chatgpt_app/
 
-WORKDIR /flask_chatgpt_app/
+WORKDIR /app/flask_chatgpt_app
 
 CMD [ "python", "run.py" ]
 
