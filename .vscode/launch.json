@@ -4,8 +4,8 @@
             "type": "debugpy",
             "request": "launch",
             "name": "Launch Flask App",
-            "program": "${workspaceFolder}/src/flask-chatgpt-app/run.py",
-            "envFile": "${workspaceFolder}/src/flask-chatgpt-app/instance/.env.example",
+            "program": "${workspaceFolder}/src/flask_chatgpt_app/run.py",
+            "envFile": "${workspaceFolder}/src/flask_chatgpt_app/instance/.env.example",
             "args": [],
             "console": "integratedTerminal"
         },
@@ -14,7 +14,7 @@
             "request": "launch",
             "name": "Launch Local ChatGPT",
             "program": "${workspaceFolder}/src/local_chatgpt.py",
-            "envFile": "${workspaceFolder}/src/flask-chatgpt-app/instance/.env.example",
+            "envFile": "${workspaceFolder}/src/flask_chatgpt_app/instance/.env.example",
             "args": [],
             "console": "integratedTerminal"
         }

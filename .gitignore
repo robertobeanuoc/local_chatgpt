@@ -172,5 +172,10 @@ cython_debug/
 
 # Flask session files
 flask_session/
+# Uploaded files
+**/uploads/
 
 build_model.sh
+# macOS system files
+.DS_Store
+**/.DS_Store
