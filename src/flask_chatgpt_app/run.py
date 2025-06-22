@@ -4,7 +4,7 @@ from openai import OpenAI
 import markdown
 import os
 from werkzeug.utils import secure_filename
-from flask_chatgpt_app.constants import model_options, default_model
+from constants import model_options, default_model
 
 app = Flask(
     __name__,
