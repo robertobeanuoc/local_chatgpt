@@ -19,6 +19,7 @@ services:
       - DEBUG=${DEBUG:-False}
       - PORT=${PORT:-6060}
       - HOST=${HOST:-0.0.0.0}
+      - SESSION_FILE_DIR=${SESSION_FILE_DIR:-/tmp/flask_session}
     volumes:
       - ./src/flask_chatgpt_app:/flask_chatgpt_app:ro
       - ./src/flask_chatgpt_app/uploads:/flask_chatgpt_app/uploads

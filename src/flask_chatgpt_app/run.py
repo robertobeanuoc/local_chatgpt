@@ -25,6 +25,8 @@ openai_api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=openai_api_key)
 
 app.config["SESSION_TYPE"] = "filesystem"
+app.config["SESSION_FILE_DIR"] = os.getenv("SESSION_FILE_DIR", "/tmp/flask_session")
+os.makedirs(app.config["SESSION_FILE_DIR"], exist_ok=True)
 app.config["SECRET_KEY"] = app.secret_key
 
 
