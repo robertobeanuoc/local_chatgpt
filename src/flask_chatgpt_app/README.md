@@ -46,7 +46,24 @@ flask-chatgpt-app
    ```
 
 4. **Set up environment variables:**
-   - Copy the `.env.example` file to `.env` and update the necessary variables.
+   - Copy the `instance/.env.example` file to `.env` at the project root (or to the `instance/` folder) and update the necessary variables. Example contents:
+
+   ```env
+   # OpenAI API key (required)
+   OPENAI_API_KEY=your-openai-api-key
+
+   # Flask secret key for session signing (recommended: 32+ random bytes or hex)
+   SECRET_KEY=your-secret-key
+
+   # Debug mode (True/False). Defaults to False in code.
+   DEBUG=False
+
+   # Optional: override port/host
+   # PORT=6060
+   # HOST=0.0.0.0
+   ```
+
+   - After copying and editing, run the app as shown below. The project already includes `.env` in `.gitignore`.
 
 5. **Run the application:**
    ```bash
