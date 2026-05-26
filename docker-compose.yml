@@ -7,6 +7,8 @@ services:
       dockerfile: docker/Dockerfile
     image: local_chatgpt_app:latest
     restart: unless-stopped
+    expose:
+      - "6060"
     ports:
       - "6060:6060"
     env_file:
